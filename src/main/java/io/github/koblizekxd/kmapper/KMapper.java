@@ -1,24 +1,20 @@
 package io.github.koblizekxd.kmapper;
 
-import io.github.koblizekxd.kmapper.asm.remapper.DataRemapper;
-import io.github.koblizekxd.kmapper.asm.visitors.DataClassVisitor;
 import io.github.koblizekxd.kmapper.mappings.Mappings;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.ClassRemapper;
+import io.github.koblizekxd.kmapper.mappings.util.Bytecode;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.io.*;
+import java.nio.file.Path;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import static org.objectweb.asm.ClassReader.EXPAND_FRAMES;
+import java.util.zip.ZipOutputStream;
 
 public class KMapper {
-    public KMapper(byte[] bytecode, Mappings mappings) {
+    private final ZipFile zipFile;
+
+    /*public KMapper(byte[] bytecode, Mappings mappings) {
         ClassReader classReader = new ClassReader(bytecode);
         ClassWriter writer = new ClassWriter(classReader, EXPAND_FRAMES);
         DataRemapper remapper = new DataRemapper();
@@ -26,25 +22,48 @@ public class KMapper {
         ClassRemapper remapper1 = new ClassRemapper(visitor, remapper);
         classReader.accept(remapper1, 0);
         write(new File("./src/test/java/Main.class"), writer.toByteArray());
+    }*/
+    private KMapper(ZipFile file) {
+        this.zipFile = file;
+    }
+    public void remap(Mappings mappings, File outputFile) throws IOException {
+        Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
+        if (outputFile.exists()) outputFile.delete();
+        outputFile.createNewFile();
+        ZipOutputStream output = new ZipOutputStream(new FileOutputStream(outputFile));
+
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            byte[] bytes = zipFile.getInputStream(entry).readAllBytes();
+
+            if (entry.getName().endsWith(".class")) {
+
+            } else {
+                ZipEntry newEntry = new ZipEntry(entry.getName());
+                output.putNextEntry(newEntry);
+                copyTo(new ByteArrayInputStream(bytes), output);
+                output.closeEntry();
+            }
+        }
+    }
+    private long copyTo(ByteArrayInputStream stream, OutputStream out) {
+        long bytesCopied = 0;
+        byte[] buffer = new byte[8 * 1024];
+        try {
+            int bytes = stream.read(buffer);
+            while (bytes >= 0) {
+                out.write(buffer, 0, bytes);
+                bytesCopied += bytes;
+                bytes = stream.read(buffer);
+            }
+            return bytesCopied;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void main(String[] args) {
-        KMapper mapper = new KMapper(getBytecode(new File("./src/test/java/Main.class")), null);
-    }
-    public static byte[] getBytecode(File file) {
-        try {
-            return Files.readAllBytes(file.toPath());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    public static void write(File file, byte[] bytecode) {
-        try (FileOutputStream stream = new FileOutputStream(file)) {
-            stream.write(bytecode);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public static KMapper open(ZipFile jarFile) {
+        return new KMapper(jarFile);
     }
 }
