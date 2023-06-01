@@ -1,5 +1,6 @@
 package io.github.koblizekxd.kmapper.mappings;
 
+import io.github.koblizekxd.kmapper.mappings.convert.ProguardMappings;
 import io.github.koblizekxd.kmapper.mappings.types.ClassMapping;
 import io.github.koblizekxd.kmapper.mappings.types.FieldMapping;
 import io.github.koblizekxd.kmapper.mappings.types.MethodMapping;
@@ -37,6 +38,11 @@ public class Mappings implements IMappable {
         remappableClasses = new ArrayList<>();
         remappableMethods = new ArrayList<>();
         remappableFields = new ArrayList<>();
+    }
+    private Mappings(List<ClassMapping> remappableClasses, List<MethodMapping> remappableMethods, List<FieldMapping> remappableFields) {
+        this.remappableClasses = remappableClasses;
+        this.remappableMethods = remappableMethods;
+        this.remappableFields = remappableFields;
     }
 
     public List<ClassMapping> getRemappableClasses() {
@@ -117,7 +123,7 @@ public class Mappings implements IMappable {
             }
         }
     }
-    public static void from() {
-
+    public static Mappings from(ProguardMappings mappings) {
+        return new Mappings(mappings.getRemappableClasses(), mappings.getRemappableMethods(), mappings.getRemappableFields());
     }
 }
