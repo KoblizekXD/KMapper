@@ -2,6 +2,7 @@ package io.github.koblizekxd.kmapper.mappings;
 
 import io.github.koblizekxd.kmapper.mappings.types.ClassMapping;
 import io.github.koblizekxd.kmapper.mappings.types.MethodMapping;
+import io.github.koblizekxd.kmapper.mappings.util.MappingException;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,16 +48,29 @@ public class Mappings implements IMappable {
     @Override
     public void resolve(String[] content) {
         boolean inClass = false;
+        ClassMapping currentClass = null;
         for (int i = 0; i < content.length; i++) {
             String line = content[i];
             Matcher matcher;
             if ((matcher = CLASS_PATTERN.matcher(line)).matches()) {
                 String newName = matcher.group("newname");
                 String oldName = matcher.group("oldname");
-                remappableClasses.add(new ClassMapping(oldName, newName));
+                ClassMapping mapping = new ClassMapping(oldName, newName);
+                remappableClasses.add(mapping);
+                currentClass = mapping;
                 inClass = true;
             } else if ((matcher = CLASS_PATTERN_END.matcher(line)).matches()) {
+                currentClass = null;
                 inClass = false;
+            } else if ((matcher = METHOD_PATTERN.matcher(line)).matches()) {
+                if (!inClass) throw new MappingException("Method mapping can't be out of Class mapping!");
+                String type = matcher.group("type");
+                String newName = matcher.group("newname");
+                String params = matcher.group("params");
+                String oldName = matcher.group("oldname");
+                MethodMapping methodMapping = new MethodMapping(oldName, newName, params, currentClass);
+                methodMapping.setType(type);
+                remappableMethods.add(methodMapping);
             }
         }
     }

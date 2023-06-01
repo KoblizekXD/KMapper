@@ -9,6 +9,7 @@ public class MethodMapping implements IMappingType {
     private final ClassMapping classMapping;
     private final int lineFrom;
     private final int lineTo;
+    private String type;
 
     public MethodMapping(String oldName, String newName, String params, ClassMapping classMapping, int lineFrom, int lineTo) {
         this.oldName = oldName;
@@ -33,6 +34,14 @@ public class MethodMapping implements IMappingType {
         this.lineFrom = lineFrom;
         this.lineTo = lineTo;
         this.params = "";
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public ClassMapping getClassMapping() {
