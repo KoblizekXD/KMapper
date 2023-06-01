@@ -36,6 +36,14 @@ public class Mappings implements IMappable {
         remappableMethods = new ArrayList<>();
     }
 
+    public List<ClassMapping> getRemappableClasses() {
+        return remappableClasses;
+    }
+
+    public List<MethodMapping> getRemappableMethods() {
+        return remappableMethods;
+    }
+
     @Override
     public void resolve(File file) {
         try {
