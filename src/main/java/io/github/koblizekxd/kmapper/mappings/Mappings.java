@@ -46,6 +46,7 @@ public class Mappings implements IMappable {
 
     @Override
     public void resolve(String[] content) {
+        boolean inClass = false;
         for (int i = 0; i < content.length; i++) {
             String line = content[i];
             Matcher matcher;
@@ -53,6 +54,9 @@ public class Mappings implements IMappable {
                 String newName = matcher.group("newname");
                 String oldName = matcher.group("oldname");
                 remappableClasses.add(new ClassMapping(oldName, newName));
+                inClass = true;
+            } else if ((matcher = CLASS_PATTERN_END.matcher(line)).matches()) {
+                inClass = false;
             }
         }
     }
