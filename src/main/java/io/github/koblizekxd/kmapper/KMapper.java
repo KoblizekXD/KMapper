@@ -1,11 +1,8 @@
 package io.github.koblizekxd.kmapper;
 
 import io.github.koblizekxd.kmapper.mappings.Mappings;
-import io.github.koblizekxd.kmapper.mappings.util.Bytecode;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 
 import java.io.*;
-import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;

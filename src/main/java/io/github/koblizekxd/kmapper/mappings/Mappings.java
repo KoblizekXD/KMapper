@@ -123,6 +123,48 @@ public class Mappings implements IMappable {
             }
         }
     }
+
+    @Override
+    public String write() {
+        StringBuilder builder = new StringBuilder("# Using KMaps\n");
+        for (ClassMapping classMapping : remappableClasses) {
+            builder.append(classMapping.getNewName())
+                    .append(" -> ")
+                    .append(classMapping.getOldName())
+                    .append(" {\n");
+            remappableFields.stream().filter(f -> f.getClassMapping().equals(classMapping))
+                    .forEach(fieldMapping -> {
+                        builder.append("\t")
+                                .append(fieldMapping.getType())
+                                .append(" ")
+                                .append(fieldMapping.getNewName())
+                                .append(" = ")
+                                .append(fieldMapping.getOldName())
+                                .append("\n");
+                    });
+            remappableMethods.stream().filter(m -> m.getClassMapping().equals(classMapping))
+                    .forEach(methodMapping -> {
+                        builder.append("\t");
+                        if (methodMapping.hasLineRange()) {
+                            builder.append("[")
+                                    .append(methodMapping.getLineFrom())
+                                    .append(" to ")
+                                    .append(methodMapping.getLineTo())
+                                    .append("] ");
+                        }
+                        builder.append(methodMapping.getType())
+                                .append(" ")
+                                .append(methodMapping.getNewName())
+                                .append("(")
+                                .append(methodMapping.getParameters())
+                                .append(")\n");
+
+                    });
+            builder.append("}\n");
+        }
+        return builder.toString();
+    }
+
     public static Mappings from(ProguardMappings mappings) {
         return new Mappings(mappings.getRemappableClasses(), mappings.getRemappableMethods(), mappings.getRemappableFields());
     }

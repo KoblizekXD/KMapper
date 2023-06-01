@@ -9,4 +9,9 @@ public class DataRemapper extends Remapper {
             return super.map("NewNameLol");
         return super.map(internalName);
     }
+
+    @Override
+    public String mapMethodName(String owner, String name, String descriptor) {
+        return super.mapMethodName(owner, name, descriptor);
+    }
 }

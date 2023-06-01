@@ -48,10 +48,6 @@ public class MethodMapping implements IMappingType {
         return classMapping;
     }
 
-    public String getParams() {
-        return params;
-    }
-
     @Override
     public String getNewName() {
         return newName;
