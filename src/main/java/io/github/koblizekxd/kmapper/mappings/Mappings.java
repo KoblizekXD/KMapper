@@ -1,6 +1,7 @@
 package io.github.koblizekxd.kmapper.mappings;
 
 import io.github.koblizekxd.kmapper.mappings.types.ClassMapping;
+import io.github.koblizekxd.kmapper.mappings.types.FieldMapping;
 import io.github.koblizekxd.kmapper.mappings.types.MethodMapping;
 import io.github.koblizekxd.kmapper.mappings.util.MappingException;
 
@@ -30,14 +31,20 @@ public class Mappings implements IMappable {
 
     private final List<ClassMapping> remappableClasses;
     private final List<MethodMapping> remappableMethods;
+    private final List<FieldMapping> remappableFields;
 
     public Mappings() {
         remappableClasses = new ArrayList<>();
         remappableMethods = new ArrayList<>();
+        remappableFields = new ArrayList<>();
     }
 
     public List<ClassMapping> getRemappableClasses() {
         return remappableClasses;
+    }
+
+    public List<FieldMapping> getRemappableFields() {
+        return remappableFields;
     }
 
     public List<MethodMapping> getRemappableMethods() {
@@ -57,8 +64,7 @@ public class Mappings implements IMappable {
     public void resolve(String[] content) {
         boolean inClass = false;
         ClassMapping currentClass = null;
-        for (int i = 0; i < content.length; i++) {
-            String line = content[i];
+        for (String line : content) {
             Matcher matcher;
             if ((matcher = CLASS_PATTERN.matcher(line)).matches()) {
                 String newName = matcher.group("newname");
@@ -90,6 +96,24 @@ public class Mappings implements IMappable {
                 MethodMapping methodMapping = new MethodMapping(oldName, newName, params, currentClass, from, to);
                 methodMapping.setType(type);
                 remappableMethods.add(methodMapping);
+            } else if ((matcher = FIELD_PATTERN_WITH_NUMBERS.matcher(line)).matches()) {
+                if (!inClass) throw new MappingException("Method mapping can't be out of Class mapping!");
+                int from = Integer.parseInt(matcher.group("from"));
+                int to = Integer.parseInt(matcher.group("to"));
+                String type = matcher.group("type");
+                String newName = matcher.group("newname");
+                String oldName = matcher.group("oldname");
+                FieldMapping fieldMapping = new FieldMapping(oldName, newName, currentClass, from, to);
+                fieldMapping.setType(type);
+                remappableFields.add(fieldMapping);
+            } else if ((matcher = FIELD_PATTERN.matcher(line)).matches()) {
+                if (!inClass) throw new MappingException("Method mapping can't be out of Class mapping!");
+                String type = matcher.group("type");
+                String newName = matcher.group("newname");
+                String oldName = matcher.group("oldname");
+                FieldMapping fieldMapping = new FieldMapping(oldName, newName, currentClass);
+                fieldMapping.setType(type);
+                remappableFields.add(fieldMapping);
             }
         }
     }
