@@ -71,6 +71,17 @@ public class Mappings implements IMappable {
                 MethodMapping methodMapping = new MethodMapping(oldName, newName, params, currentClass);
                 methodMapping.setType(type);
                 remappableMethods.add(methodMapping);
+            } else if ((matcher = METHOD_PATTERN_WITH_NUMBERS.matcher(line)).matches()) {
+                if (!inClass) throw new MappingException("Method mapping can't be out of Class mapping!");
+                int from = Integer.parseInt(matcher.group("from"));
+                int to = Integer.parseInt(matcher.group("to"));
+                String type = matcher.group("type");
+                String newName = matcher.group("newname");
+                String params = matcher.group("params");
+                String oldName = matcher.group("oldname");
+                MethodMapping methodMapping = new MethodMapping(oldName, newName, params, currentClass, from, to);
+                methodMapping.setType(type);
+                remappableMethods.add(methodMapping);
             }
         }
     }
