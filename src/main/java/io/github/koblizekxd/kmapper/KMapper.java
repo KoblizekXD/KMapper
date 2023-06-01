@@ -13,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.zip.ZipFile;
 
 import static org.objectweb.asm.ClassReader.EXPAND_FRAMES;
 

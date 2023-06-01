@@ -1,5 +1,6 @@
-package io.github.koblizekxd.kmapper.mappings;
+package io.github.koblizekxd.kmapper.mappings.convert;
 
+import io.github.koblizekxd.kmapper.mappings.IMappable;
 import io.github.koblizekxd.kmapper.mappings.types.ClassMapping;
 import io.github.koblizekxd.kmapper.mappings.types.FieldMapping;
 import io.github.koblizekxd.kmapper.mappings.types.MethodMapping;
@@ -9,31 +10,29 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Mappings implements IMappable {
-    private static final Pattern CLASS_PATTERN
-            = Pattern.compile("(?<newname>.+) -> (?<oldname>.+) \\{");
-    private static final Pattern CLASS_PATTERN_END
-            = Pattern.compile("}");
-    private static final Pattern METHOD_PATTERN
-            = Pattern.compile("\t(?<type>.+) (?<newname>.+)\\((?<params>.*)\\) = (?<oldname>.+)");
-    private static final Pattern METHOD_PATTERN_WITH_NUMBERS
-            = Pattern.compile("\t\\[(?<from>.+) to (?<to>.+)] (?<type>.+) (?<newname>.+)\\((?<params>.*)\\) = (?<oldname>.+)");
-    private static final Pattern FIELD_PATTERN_WITH_NUMBERS
-            = Pattern.compile("\t\\[(?<from>.+) to (?<to>.+)] (?<type>.+) (?<newname>.+) = (?<oldname>.+)");
-    private static final Pattern FIELD_PATTERN
-            = Pattern.compile("\t(?<type>.+) (?<newname>.+) = (?<oldname>.+)");
+public class ProguardMappings implements IMappable {
+    @Override
+    public void resolve(File file) {
+        try {
+            this.resolve(Files.readAllLines(file.toPath()).toArray(String[]::new));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private final Pattern CLASS_PATTERN = Pattern.compile("(?<newname>\\S+) -> (?<oldname>\\S+):");
+    private final Pattern FIELD_PATTERN = Pattern.compile("\t(?<type>.+) (?<newname>.+) -> (?<oldname>.+)");
+    private final Pattern METHOD_PATTERN = Pattern.compile("\t(?<type>.+) (?<newname>.+)\\((?<params>.*)\\) -> (?<oldname>.+)");
+    private final Pattern METHOD_PATTERN_WITH_NUMBERS = Pattern.compile("\t(?<from>.+):(?<to>.+):(?<type>.+) (?<newname>.+)\\((?<params>.*)\\) -> (?<oldname>.+)");
 
     private final List<ClassMapping> remappableClasses;
     private final List<MethodMapping> remappableMethods;
     private final List<FieldMapping> remappableFields;
 
-    public Mappings() {
+    public ProguardMappings() {
         remappableClasses = new ArrayList<>();
         remappableMethods = new ArrayList<>();
         remappableFields = new ArrayList<>();
@@ -52,17 +51,7 @@ public class Mappings implements IMappable {
     }
 
     @Override
-    public void resolve(File file) {
-        try {
-            this.resolve(Files.readAllLines(file.toPath()).toArray(String[]::new));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
     public void resolve(String[] content) {
-        boolean inClass = false;
         ClassMapping currentClass = null;
         for (String line : content) {
             Matcher matcher;
@@ -72,12 +61,7 @@ public class Mappings implements IMappable {
                 ClassMapping mapping = new ClassMapping(oldName, newName);
                 remappableClasses.add(mapping);
                 currentClass = mapping;
-                inClass = true;
-            } else if ((matcher = CLASS_PATTERN_END.matcher(line)).matches()) {
-                currentClass = null;
-                inClass = false;
             } else if ((matcher = METHOD_PATTERN.matcher(line)).matches()) {
-                if (!inClass) throw new MappingException("Method mapping can't be out of Class mapping!");
                 String type = matcher.group("type");
                 String newName = matcher.group("newname");
                 String params = matcher.group("params");
@@ -86,7 +70,6 @@ public class Mappings implements IMappable {
                 methodMapping.setType(type);
                 remappableMethods.add(methodMapping);
             } else if ((matcher = METHOD_PATTERN_WITH_NUMBERS.matcher(line)).matches()) {
-                if (!inClass) throw new MappingException("Method mapping can't be out of Class mapping!");
                 int from = Integer.parseInt(matcher.group("from"));
                 int to = Integer.parseInt(matcher.group("to"));
                 String type = matcher.group("type");
@@ -96,18 +79,7 @@ public class Mappings implements IMappable {
                 MethodMapping methodMapping = new MethodMapping(oldName, newName, params, currentClass, from, to);
                 methodMapping.setType(type);
                 remappableMethods.add(methodMapping);
-            } else if ((matcher = FIELD_PATTERN_WITH_NUMBERS.matcher(line)).matches()) {
-                if (!inClass) throw new MappingException("Method mapping can't be out of Class mapping!");
-                int from = Integer.parseInt(matcher.group("from"));
-                int to = Integer.parseInt(matcher.group("to"));
-                String type = matcher.group("type");
-                String newName = matcher.group("newname");
-                String oldName = matcher.group("oldname");
-                FieldMapping fieldMapping = new FieldMapping(oldName, newName, currentClass, from, to);
-                fieldMapping.setType(type);
-                remappableFields.add(fieldMapping);
             } else if ((matcher = FIELD_PATTERN.matcher(line)).matches()) {
-                if (!inClass) throw new MappingException("Method mapping can't be out of Class mapping!");
                 String type = matcher.group("type");
                 String newName = matcher.group("newname");
                 String oldName = matcher.group("oldname");
@@ -116,8 +88,5 @@ public class Mappings implements IMappable {
                 remappableFields.add(fieldMapping);
             }
         }
-    }
-    public static void from() {
-
     }
 }
