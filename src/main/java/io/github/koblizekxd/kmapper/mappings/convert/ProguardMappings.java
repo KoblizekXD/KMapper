@@ -24,9 +24,9 @@ public class ProguardMappings implements IMappable {
         }
     }
     private final Pattern CLASS_PATTERN = Pattern.compile("(?<newname>\\S+) -> (?<oldname>\\S+):");
-    private final Pattern FIELD_PATTERN = Pattern.compile("\t(?<type>.+) (?<newname>.+) -> (?<oldname>.+)");
-    private final Pattern METHOD_PATTERN = Pattern.compile("\t(?<type>.+) (?<newname>.+)\\((?<params>.*)\\) -> (?<oldname>.+)");
-    private final Pattern METHOD_PATTERN_WITH_NUMBERS = Pattern.compile("\t(?<from>.+):(?<to>.+):(?<type>.+) (?<newname>.+)\\((?<params>.*)\\) -> (?<oldname>.+)");
+    private final Pattern FIELD_PATTERN = Pattern.compile("(?<type>\\S+) (?<newname>.+) -> (?<oldname>.+)");
+    private final Pattern METHOD_PATTERN = Pattern.compile("(?<type>.+) (?<newname>.+)\\((?<params>.*)\\) -> (?<oldname>.+)");
+    private final Pattern METHOD_PATTERN_WITH_NUMBERS = Pattern.compile("(?<from>\\S+):(?<to>\\S+):(?<type>.+) (?<newname>.+)\\((?<params>.*)\\) -> (?<oldname>.+)");
 
     private final List<ClassMapping> remappableClasses;
     private final List<MethodMapping> remappableMethods;
@@ -55,21 +55,13 @@ public class ProguardMappings implements IMappable {
         ClassMapping currentClass = null;
         for (String line : content) {
             Matcher matcher;
-            if ((matcher = CLASS_PATTERN.matcher(line)).matches()) {
+            if ((matcher = CLASS_PATTERN.matcher(line)).find()) {
                 String newName = matcher.group("newname");
                 String oldName = matcher.group("oldname");
                 ClassMapping mapping = new ClassMapping(oldName, newName);
                 remappableClasses.add(mapping);
                 currentClass = mapping;
-            } else if ((matcher = METHOD_PATTERN.matcher(line)).matches()) {
-                String type = matcher.group("type");
-                String newName = matcher.group("newname");
-                String params = matcher.group("params");
-                String oldName = matcher.group("oldname");
-                MethodMapping methodMapping = new MethodMapping(oldName, newName, params, currentClass);
-                methodMapping.setType(type);
-                remappableMethods.add(methodMapping);
-            } else if ((matcher = METHOD_PATTERN_WITH_NUMBERS.matcher(line)).matches()) {
+            } else if ((matcher = METHOD_PATTERN_WITH_NUMBERS.matcher(line)).find()) {
                 int from = Integer.parseInt(matcher.group("from"));
                 int to = Integer.parseInt(matcher.group("to"));
                 String type = matcher.group("type");
@@ -79,7 +71,15 @@ public class ProguardMappings implements IMappable {
                 MethodMapping methodMapping = new MethodMapping(oldName, newName, params, currentClass, from, to);
                 methodMapping.setType(type);
                 remappableMethods.add(methodMapping);
-            } else if ((matcher = FIELD_PATTERN.matcher(line)).matches()) {
+            } else if ((matcher = METHOD_PATTERN.matcher(line)).find()) {
+                String type = matcher.group("type");
+                String newName = matcher.group("newname");
+                String params = matcher.group("params");
+                String oldName = matcher.group("oldname");
+                MethodMapping methodMapping = new MethodMapping(oldName, newName, params, currentClass);
+                methodMapping.setType(type);
+                remappableMethods.add(methodMapping);
+            } else if ((matcher = FIELD_PATTERN.matcher(line)).find()) {
                 String type = matcher.group("type");
                 String newName = matcher.group("newname");
                 String oldName = matcher.group("oldname");

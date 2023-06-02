@@ -1,9 +1,12 @@
 package io.github.koblizekxd.kmapper;
 
 import io.github.koblizekxd.kmapper.mappings.Mappings;
+import io.github.koblizekxd.kmapper.mappings.convert.ProguardMappings;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -42,6 +45,19 @@ public class KMapper {
                 copyTo(new ByteArrayInputStream(bytes), output);
                 output.closeEntry();
             }
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            ProguardMappings proguardMappings = new ProguardMappings();
+            proguardMappings.resolve(new File("./1.18.2-client.txt"));
+            String data = Mappings.from(proguardMappings).write();
+            FileWriter writer = new FileWriter("./mappings.kmap");
+            writer.write(data);
+            writer.close();
+        } catch (Exception e) {
+            System.err.println(e);
         }
     }
     private long copyTo(ByteArrayInputStream stream, OutputStream out) {
